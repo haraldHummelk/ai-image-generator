@@ -24,7 +24,6 @@
             background-color: #eef2f6;
         }
 
-        /* Animations-Canvas */
         #waveCanvas {
             position: fixed;
             inset: 0;
@@ -62,10 +61,16 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
+            margin: 5px;
         }
 
         button:hover {
             background: #0056b3;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         #status {
@@ -94,15 +99,21 @@
     <input type="text" id="prompt" placeholder="Beschreibe dein Bild (z.B. Brassen fangen am Kanal)">
     <br>
     <button onclick="generate()">Bild berechnen</button>
+    <button id="downloadBtn" onclick="downloadImage()" disabled>Bild herunterladen</button>
     <div id="status">Bereit.</div>
-    <img id="output">
+    <img id="output" alt="Generiertes Bild">
 </div>
 
 <script>
     const canvas = document.getElementById('waveCanvas');
     const ctx = canvas.getContext('2d');
 
+    const img = document.getElementById('output');
+    const status = document.getElementById('status');
+    const downloadBtn = document.getElementById('downloadBtn');
+
     let W = 0, H = 0, dpr = 1;
+    let currentImageUrl = "";
 
     function resizeCanvas() {
         dpr = window.devicePixelRatio || 1;
@@ -151,7 +162,6 @@
     function animate(time) {
         ctx.clearRect(0, 0, W, H);
 
-        // ganz dezente Nebelschicht, damit es nicht leer wirkt
         const mist = ctx.createLinearGradient(0, 0, W, H);
         mist.addColorStop(0, 'rgba(255,255,255,0.03)');
         mist.addColorStop(0.5, 'rgba(0,0,0,0.02)');
@@ -159,7 +169,6 @@
         ctx.fillStyle = mist;
         ctx.fillRect(0, 0, W, H);
 
-        // langsame, zufällige Bewegung
         const driftX = Math.sin(time * 0.00012) * 22;
         const driftY = Math.cos(time * 0.00010) * 14;
 
@@ -167,7 +176,6 @@
         drawWave(time, waves[1], driftY * 0.3);
         drawWave(time, waves[2], -driftY * 0.5);
 
-        // leichte zusätzliche Bewegungswolken
         ctx.save();
         ctx.globalAlpha = 0.06;
         ctx.filter = 'blur(45px)';
@@ -188,13 +196,13 @@
 
     function generate() {
         const prompt = document.getElementById('prompt').value;
-        const img = document.getElementById('output');
-        const status = document.getElementById('status');
 
         if (!prompt) return alert("Eingabe fehlt!");
 
         status.innerText = "Verbindung zum Server wird aufgebaut...";
         img.style.display = "none";
+        downloadBtn.disabled = true;
+        currentImageUrl = "";
 
         const seed = Math.floor(Math.random() * 999999);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=1024&nologo=true`;
@@ -209,14 +217,48 @@
             clearTimeout(timer);
             status.innerText = "Fertig!";
             img.style.display = "block";
+            currentImageUrl = img.src;
+            downloadBtn.disabled = false;
         };
 
         img.onerror = function() {
             clearTimeout(timer);
             status.innerText = "Server-Fehler. Der KI-Knoten ist gerade überlastet.";
+            downloadBtn.disabled = true;
+            currentImageUrl = "";
         };
 
         img.src = url;
+    }
+
+    async function downloadImage() {
+        if (!currentImageUrl) {
+            alert("Noch kein Bild zum Herunterladen vorhanden.");
+            return;
+        }
+
+        try {
+            const response = await fetch(currentImageUrl, { mode: 'cors' });
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = 'ki-bild.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            const a = document.createElement('a');
+            a.href = currentImageUrl;
+            a.download = 'ki-bild.png';
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
     }
 </script>
 
