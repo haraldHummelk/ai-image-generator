@@ -1,133 +1,144 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KI Bildgenerator v2.0</title>
-    <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KI Bildgenerator v2.0</title>
 
+<style>
+    :root {
+        --bg-size: 500px;
+        --bg-position: bottom center;
+    }
+
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        font-family: sans-serif;
+        text-align: center;
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+
+        background-image: url('https://i.ibb.co/x8snNVfT/new-removebg-preview.png');
+        background-size: var(--bg-size);
+        background-position: var(--bg-position);
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-color: #eef2f6;
+    }
+
+    @media (max-width: 768px) {
         body {
-            font-family: sans-serif;
-            text-align: center;
-            padding: 40px;
-            position: relative;
-            overflow: hidden;
-            background-image: url('https://i.ibb.co/x8snNVfT/new-removebg-preview.png');
-            background-size: 500px;
-            background-position: bottom;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            background-color: #eef2f6;
+            background-attachment: scroll;
         }
+    }
 
-        #waveCanvas {
-            position: fixed;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 0;
-        }
+    #waveCanvas {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 0;
+    }
 
-        .container {
-            position: relative;
-            z-index: 2;
-            background: rgba(255, 255, 255, 0.88);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            max-width: 700px;
-            margin: auto;
-            backdrop-filter: blur(2px);
-        }
+    .container {
+        position: relative;
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.88);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        max-width: 700px;
+        margin: auto;
+        backdrop-filter: blur(2px);
+    }
 
-        input {
-            width: 80%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
+    input {
+        width: 80%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
 
-        button {
-            padding: 12px 24px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 5px;
-        }
+    button {
+        padding: 12px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        margin: 5px;
+    }
 
-        button:hover {
-            background: #0056b3;
-        }
+    button:hover {
+        background: #0056b3;
+    }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 
-        #status {
-            margin: 20px 0 10px;
-            color: #333;
-            font-weight: bold;
-            text-shadow: 0 0 5px white;
-        }
+    #status {
+        margin: 20px 0 10px;
+        color: #333;
+        font-weight: bold;
+    }
 
-        #progressWrap {
-            width: 100%;
-            max-width: 420px;
-            margin: 0 auto 14px;
-            background: rgba(255,255,255,0.75);
-            border: 1px solid rgba(0,0,0,0.08);
-            border-radius: 999px;
-            overflow: hidden;
-            height: 16px;
-            display: none;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
-        }
+    #progressWrap {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto 10px;
+        height: 14px;
+        background: rgba(0,0,0,0.08);
+        border-radius: 999px;
+        overflow: hidden;
+        display: none;
+    }
 
-        #progressBar {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #2c7df0, #0f5fcc);
-            transition: width 0.18s linear;
-        }
+    #progressBar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #2c7df0, #0f5fcc);
+        transition: width 0.2s ease;
+    }
 
-        #progressText {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #222;
-            display: none;
-        }
+    #progressText {
+        font-weight: bold;
+        display: none;
+        margin-bottom: 10px;
+    }
 
-        img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 20px;
-            display: none;
-            border: 5px solid #fff;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-    </style>
+    img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin-top: 20px;
+        display: none;
+        border: 5px solid #fff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+</style>
 </head>
+
 <body>
 
 <canvas id="waveCanvas"></canvas>
 
 <div class="container">
     <h2>Haralds KI Labor</h2>
-    <input type="text" id="prompt" placeholder="Beschreibe dein Bild (z.B. Brassen fangen am Kanal)">
+
+    <input type="text" id="prompt" placeholder="Beschreibe dein Bild...">
+
     <br>
     <button onclick="generate()">Bild berechnen</button>
-    <button id="downloadBtn" onclick="downloadImage()" disabled>Bild herunterladen</button>
+    <button id="downloadBtn" onclick="downloadImage()" disabled>Download</button>
 
     <div id="status">Bereit.</div>
 
@@ -136,230 +147,179 @@
     </div>
     <div id="progressText">0%</div>
 
-    <img id="output" alt="Generiertes Bild">
+    <img id="output">
 </div>
 
 <script>
-    const canvas = document.getElementById('waveCanvas');
-    const ctx = canvas.getContext('2d');
+/* ---------------- BACKGROUND RESPONSIVE ---------------- */
 
-    const img = document.getElementById('output');
-    const status = document.getElementById('status');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const progressWrap = document.getElementById('progressWrap');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
+function updateBackgroundForDevice() {
+    const isMobile =
+        window.matchMedia("(max-width: 768px)").matches ||
+        "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0;
 
-    let W = 0, H = 0, dpr = 1;
-    let currentImageUrl = "";
-    let progressTimer = null;
-    let progressValue = 0;
-    let generating = false;
-    let startedAt = 0;
-    let targetDurationMs = 45000; 
+    if (isMobile) {
+        document.documentElement.style.setProperty("--bg-size", "200px");
+        document.documentElement.style.setProperty("--bg-position", "center bottom");
+    } else {
+        document.documentElement.style.setProperty("--bg-size", "500px");
+        document.documentElement.style.setProperty("--bg-position", "bottom center");
+    }
+}
 
-    function resizeCanvas() {
-        dpr = window.devicePixelRatio || 1;
-        W = window.innerWidth;
-        H = window.innerHeight;
-        canvas.width = Math.floor(W * dpr);
-        canvas.height = Math.floor(H * dpr);
-        canvas.style.width = W + 'px';
-        canvas.style.height = H + 'px';
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+window.addEventListener("resize", updateBackgroundForDevice);
+window.addEventListener("orientationchange", updateBackgroundForDevice);
+updateBackgroundForDevice();
+
+/* ---------------- WAVE CANVAS ---------------- */
+
+const canvas = document.getElementById('waveCanvas');
+const ctx = canvas.getContext('2d');
+
+let W = 0, H = 0, dpr = 1;
+
+function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    W = window.innerWidth;
+    H = window.innerHeight;
+
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const waves = [
+    { amp: 18, freq: 0.012, speed: 0.00035, phase: Math.random()*1000, y: 0.25*H, alpha: 0.09, width: 80 },
+    { amp: 26, freq: 0.010, speed: 0.00028, phase: Math.random()*1000, y: 0.52*H, alpha: 0.08, width: 100 },
+    { amp: 20, freq: 0.014, speed: 0.00033, phase: Math.random()*1000, y: 0.78*H, alpha: 0.07, width: 90 }
+];
+
+function drawWave(t, w, off) {
+    ctx.save();
+    ctx.strokeStyle = `rgba(0,0,0,${w.alpha})`;
+    ctx.lineWidth = w.width;
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+
+    for (let x = -80; x <= W + 80; x += 18) {
+        const y =
+            w.y + off +
+            Math.sin(x * w.freq + t * w.speed + w.phase) * w.amp +
+            Math.sin(x * w.freq * 1.7 + t * w.speed * 1.3) * (w.amp * 0.4);
+
+        if (x === -80) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
     }
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    ctx.stroke();
+    ctx.restore();
+}
 
-    const waves = [
-        { amp: 18, freq: 0.012, speed: 0.00035, phase: Math.random() * 1000, y: 0.25 * H, alpha: 0.09, width: 80 },
-        { amp: 26, freq: 0.010, speed: 0.00028, phase: Math.random() * 1000, y: 0.52 * H, alpha: 0.08, width: 100 },
-        { amp: 20, freq: 0.014, speed: 0.00033, phase: Math.random() * 1000, y: 0.78 * H, alpha: 0.07, width: 90 }
-    ];
+function animate(t) {
+    ctx.clearRect(0,0,W,H);
 
-    function drawWave(time, wave, offsetY) {
-        const yBase = wave.y + offsetY;
-        ctx.save();
-        ctx.strokeStyle = `rgba(0,0,0,${wave.alpha})`;
-        ctx.lineWidth = wave.width;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.shadowColor = 'rgba(0,0,0,0.18)';
-        ctx.shadowBlur = 30;
+    const driftY = Math.sin(t*0.0001)*10;
 
-        ctx.beginPath();
-        for (let x = -80; x <= W + 80; x += 18) {
-            const y =
-                yBase +
-                Math.sin(x * wave.freq + time * wave.speed + wave.phase) * wave.amp +
-                Math.sin(x * wave.freq * 1.7 + time * wave.speed * 1.3 + wave.phase * 0.7) * (wave.amp * 0.45);
-
-            if (x === -80) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        ctx.restore();
-    }
-
-    function animate(time) {
-        ctx.clearRect(0, 0, W, H);
-
-        const mist = ctx.createLinearGradient(0, 0, W, H);
-        mist.addColorStop(0, 'rgba(255,255,255,0.03)');
-        mist.addColorStop(0.5, 'rgba(0,0,0,0.02)');
-        mist.addColorStop(1, 'rgba(255,255,255,0.03)');
-        ctx.fillStyle = mist;
-        ctx.fillRect(0, 0, W, H);
-
-        const driftX = Math.sin(time * 0.00012) * 22;
-        const driftY = Math.cos(time * 0.00010) * 14;
-
-        drawWave(time, waves[0], driftY * 0.8);
-        drawWave(time, waves[1], driftY * 0.3);
-        drawWave(time, waves[2], -driftY * 0.5);
-
-        ctx.save();
-        ctx.globalAlpha = 0.06;
-        ctx.filter = 'blur(45px)';
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.beginPath();
-        ctx.ellipse(W * 0.2 + driftX, H * 0.25 + driftY, 220, 120, 0.4, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.ellipse(W * 0.75 - driftX, H * 0.68 - driftY, 260, 140, -0.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        requestAnimationFrame(animate);
-    }
+    drawWave(t,waves[0],driftY);
+    drawWave(t,waves[1],0);
+    drawWave(t,waves[2],-driftY);
 
     requestAnimationFrame(animate);
+}
 
-    function setProgress(p) {
-        const v = Math.max(0, Math.min(100, Math.round(p)));
-        progressValue = v;
-        progressBar.style.width = v + '%';
-        progressText.textContent = v + '%';
-    }
+requestAnimationFrame(animate);
 
-    function startProgress() {
-        generating = true;
-        startedAt = Date.now();
-        progressWrap.style.display = 'block';
-        progressText.style.display = 'block';
-        setProgress(0);
+/* ---------------- PROGRESS ---------------- */
 
-        clearInterval(progressTimer);
-        progressTimer = setInterval(() => {
-            if (!generating) return;
+let progress = 0;
+let progressInterval = null;
+let imgUrl = "";
 
-            const elapsed = Date.now() - startedAt;
-            const raw = (elapsed / targetDurationMs) * 100;
+const bar = document.getElementById("progressBar");
+const wrap = document.getElementById("progressWrap");
+const text = document.getElementById("progressText");
+const status = document.getElementById("status");
+const img = document.getElementById("output");
+const btn = document.getElementById("downloadBtn");
 
-            let p;
-            if (raw < 15) p = raw * 1.3;
-            else if (raw < 60) p = 19 + (raw - 15) * 0.9;
-            else if (raw < 90) p = 59 + (raw - 60) * 0.55;
-            else p = 75 + (raw - 90) * 0.25;
+function setProgress(p) {
+    progress = Math.min(100,p);
+    bar.style.width = progress + "%";
+    text.textContent = Math.round(progress) + "%";
+}
 
-            p = Math.min(95, p);
+function startProgress() {
+    wrap.style.display = "block";
+    text.style.display = "block";
+    progress = 0;
 
-            if (p > progressValue) setProgress(p);
-        }, 180);
-    }
-
-    function finishProgress() {
-        generating = false;
-        clearInterval(progressTimer);
-        setProgress(100);
-        setTimeout(() => {
-            progressWrap.style.display = 'none';
-            progressText.style.display = 'none';
-        }, 1200);
-    }
-
-    function failProgress() {
-        generating = false;
-        clearInterval(progressTimer);
-        setProgress(0);
-        setTimeout(() => {
-            progressWrap.style.display = 'none';
-            progressText.style.display = 'none';
-        }, 800);
-    }
-
-    function generate() {
-        const prompt = document.getElementById('prompt').value;
-
-        if (!prompt) return alert("Eingabe fehlt!");
-
-        status.innerText = "Verbindung zum Server wird aufgebaut...";
-        img.style.display = "none";
-        downloadBtn.disabled = true;
-        currentImageUrl = "";
-
-        startProgress();
-
-        const seed = Math.floor(Math.random() * 999999);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=1024&nologo=true`;
-
-        const timer = setTimeout(() => {
-            if (status.innerText !== "Fertig!") {
-                status.innerText = "Bild wird generiert...";
-            }
-        }, 10000);
-
-        img.onload = function() {
-            clearTimeout(timer);
-            status.innerText = "Fertig!";
-            img.style.display = "block";
-            currentImageUrl = img.src;
-            downloadBtn.disabled = false;
-            finishProgress();
-        };
-
-        img.onerror = function() {
-            clearTimeout(timer);
-            status.innerText = "Server-Fehler. Der KI-Knoten ist gerade überlastet.";
-            downloadBtn.disabled = true;
-            currentImageUrl = "";
-            failProgress();
-        };
-
-        img.src = url;
-    }
-
-    async function downloadImage() {
-        if (!currentImageUrl) {
-            alert("Noch kein Bild zum Herunterladen vorhanden.");
-            return;
+    progressInterval = setInterval(() => {
+        if (progress < 92) {
+            setProgress(progress + Math.random()*3);
         }
+    }, 200);
+}
 
-        try {
-            const response = await fetch(currentImageUrl, { mode: 'cors' });
-            const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
+function stopProgress() {
+    clearInterval(progressInterval);
+    setProgress(100);
 
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = 'ki-bild.png';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+    setTimeout(()=>{
+        wrap.style.display="none";
+        text.style.display="none";
+    },800);
+}
 
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-        } catch (error) {
-            const a = document.createElement('a');
-            a.href = currentImageUrl;
-            a.download = 'ki-bild.png';
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-        }
-    }
+/* ---------------- GENERATE ---------------- */
+
+function generate() {
+    const prompt = document.getElementById("prompt").value;
+    if(!prompt) return alert("Eingabe fehlt!");
+
+    status.textContent = "Generiere...";
+    img.style.display = "none";
+    btn.disabled = true;
+
+    startProgress();
+
+    const seed = Math.floor(Math.random()*999999);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=1024&nologo=true`;
+
+    img.onload = () => {
+        status.textContent = "Fertig!";
+        img.style.display = "block";
+        imgUrl = img.src;
+        btn.disabled = false;
+        stopProgress();
+    };
+
+    img.onerror = () => {
+        status.textContent = "Fehler beim Laden";
+        btn.disabled = true;
+        stopProgress();
+    };
+
+    img.src = url;
+}
+
+/* ---------------- DOWNLOAD ---------------- */
+
+function downloadImage() {
+    if(!imgUrl) return;
+
+    const a = document.createElement("a");
+    a.href = imgUrl;
+    a.download = "ki-bild.png";
+    a.click();
+}
 </script>
 
 </body>
