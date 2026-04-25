@@ -1,72 +1,166 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>KI Bildgenerator v2.0</title>
+
+    <style>
+        /* Hintergrundbild als eigenes Layer */
+        .background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i.ibb.co/x8snNVfT/new-removebg-preview.png');
+            background-size: 500px;
+            background-position: bottom;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            z-index: -2;
+        }
+
+        /* Dynamische künstlerische Wellen-Schatten-Animation */
+        .wave-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            pointer-events: none;
+            z-index: -1;
+
+            background: radial-gradient(
+                circle at 30% 30%,
+                rgba(0,0,0,0.15),
+                rgba(0,0,0,0.05) 40%,
+                transparent 70%
+            );
+
+            filter: blur(80px);
+            opacity: 0.35;
+
+            animation: waveMove 40s ease-in-out infinite alternate;
+        }
+
+        @keyframes waveMove {
+            0%   { transform: translate(-10%, -10%) scale(1.1); }
+            25%  { transform: translate(5%, -5%) scale(1.2); }
+            50%  { transform: translate(10%, 10%) scale(1.15); }
+            75%  { transform: translate(-5%, 5%) scale(1.25); }
+            100% { transform: translate(-10%, -10%) scale(1.1); }
+        }
+
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 40px;
+            position: relative;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+
+            background: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            max-width: 700px;
+            margin: auto;
+        }
+
+        input {
+            width: 80%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover { background: #0056b3; }
+
+        #status {
+            margin: 20px;
+            color: #333;
+            font-weight: bold;
+            text-shadow: 0 0 5px white;
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            border: 5px solid #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Hintergrundbild -->
+<div class="background-image"></div>
+
+<!-- Wellenanimation -->
+<div class="wave-overlay"></div>
+
+<!-- Inhalt -->
+<div class="container">
+    <h2>KI Bild-Labor</h2>
+    <input type="text" id="prompt" placeholder="Beschreibe dein Bild (z.B. Brassen fangen am Kanal)">
+    <br>
+    <button onclick="generate()">Bild berechnen</button>
+    <div id="status">Bereit.</div>
+    <img id="output">
+</div>
+
 <script>
-function generate() {
-    const prompt = document.getElementById('prompt').value;
-    const img = document.getElementById('output');
-    const status = document.getElementById('status');
+    function generate() {
+        const prompt = document.getElementById('prompt').value;
+        const img = document.getElementById('output');
+        const status = document.getElementById('status');
 
-    if(!prompt) return alert("Eingabe fehlt!");
+        if(!prompt) return alert("Eingabe fehlt!");
 
-    img.style.display = "none";
+        status.innerText = "Verbindung zum Server wird aufgebaut...";
+        img.style.display = "none";
 
-    const seed = Math.floor(Math.random() * 999999);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=1024&nologo=true`;
+        const seed = Math.floor(Math.random() * 999999);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=1024&nologo=true`;
 
-    // 🧠 Liste mit möglichen "KI-Gedanken"
-    const thoughts = [
-        "neuanordnung der pixel...",
-        "denke tiefer nach...",
-        "analysiere lichtverhältnisse...",
-        "optimiere kanten...",
-        "generiere strukturmuster...",
-        "simuliere realität...",
-        "berechne perspektive...",
-        "verbessere farbverläufe...",
-        "rekonstruiere details...",
-        "verfeinere texturen...",
-        "erkenne objekte...",
-        "kombiniere bildlayer...",
-        "simuliere tiefenschärfe...",
-        "optimiere kontraste...",
-        "generiere schattenwurf...",
-        "berechne lichtquellen...",
-        "verarbeite neuronales netz...",
-        "verstärke bildtiefe...",
-        "erzeuge atmosphäre...",
-        "justiere farbbalance..."
-    ];
-
-    let timeouts = [];
-    let running = true;
-
-    // 🔁 50 zufällige Status-Updates
-    for(let i = 0; i < 50; i++) {
-        const delay = Math.random() * 20000; // innerhalb von 20 Sekunden verteilt
-        const randomText = thoughts[Math.floor(Math.random() * thoughts.length)];
-
-        const t = setTimeout(() => {
-            if(running) {
-                status.innerText = randomText;
+        const timer = setTimeout(() => {
+            if(status.innerText !== "Fertig!") {
+                status.innerText = "Bild wird generiert (ca 3 min)";
             }
-        }, delay);
+        }, 10000);
 
-        timeouts.push(t);
+        img.onload = function() {
+            clearTimeout(timer);
+            status.innerText = "Fertig!";
+            img.style.display = "block";
+        };
+
+        img.onerror = function() {
+            clearTimeout(timer);
+            status.innerText = "Server-Fehler. Der KI-Knoten ist gerade überlastet.";
+        };
+
+        img.src = url;
     }
-
-    // 📡 Bild laden
-    img.onload = function() {
-        running = false;
-        timeouts.forEach(t => clearTimeout(t));
-        status.innerText = "Fertig!";
-        img.style.display = "block";
-    };
-
-    img.onerror = function() {
-        running = false;
-        timeouts.forEach(t => clearTimeout(t));
-        status.innerText = "Server-Fehler. Der KI-Knoten ist überlastet.";
-    };
-
-    status.innerText = "Initialisiere neuronales Netzwerk...";
-    img.src = url;
-}
 </script>
+
+</body>
+</html>
