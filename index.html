@@ -74,10 +74,38 @@
         }
 
         #status {
-            margin: 20px;
+            margin: 20px 0 10px;
             color: #333;
             font-weight: bold;
             text-shadow: 0 0 5px white;
+        }
+
+        #progressWrap {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto 14px;
+            background: rgba(255,255,255,0.75);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 999px;
+            overflow: hidden;
+            height: 16px;
+            display: none;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        #progressBar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #2c7df0, #0f5fcc);
+            transition: width 0.18s linear;
+        }
+
+        #progressText {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #222;
+            display: none;
         }
 
         img {
@@ -100,7 +128,14 @@
     <br>
     <button onclick="generate()">Bild berechnen</button>
     <button id="downloadBtn" onclick="downloadImage()" disabled>Bild herunterladen</button>
+
     <div id="status">Bereit.</div>
+
+    <div id="progressWrap">
+        <div id="progressBar"></div>
+    </div>
+    <div id="progressText">0%</div>
+
     <img id="output" alt="Generiertes Bild">
 </div>
 
@@ -111,9 +146,17 @@
     const img = document.getElementById('output');
     const status = document.getElementById('status');
     const downloadBtn = document.getElementById('downloadBtn');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
 
     let W = 0, H = 0, dpr = 1;
     let currentImageUrl = "";
+    let progressTimer = null;
+    let progressValue = 0;
+    let generating = false;
+    let startedAt = 0;
+    let targetDurationMs = 45000; 
 
     function resizeCanvas() {
         dpr = window.devicePixelRatio || 1;
@@ -194,6 +237,59 @@
 
     requestAnimationFrame(animate);
 
+    function setProgress(p) {
+        const v = Math.max(0, Math.min(100, Math.round(p)));
+        progressValue = v;
+        progressBar.style.width = v + '%';
+        progressText.textContent = v + '%';
+    }
+
+    function startProgress() {
+        generating = true;
+        startedAt = Date.now();
+        progressWrap.style.display = 'block';
+        progressText.style.display = 'block';
+        setProgress(0);
+
+        clearInterval(progressTimer);
+        progressTimer = setInterval(() => {
+            if (!generating) return;
+
+            const elapsed = Date.now() - startedAt;
+            const raw = (elapsed / targetDurationMs) * 100;
+
+            let p;
+            if (raw < 15) p = raw * 1.3;
+            else if (raw < 60) p = 19 + (raw - 15) * 0.9;
+            else if (raw < 90) p = 59 + (raw - 60) * 0.55;
+            else p = 75 + (raw - 90) * 0.25;
+
+            p = Math.min(95, p);
+
+            if (p > progressValue) setProgress(p);
+        }, 180);
+    }
+
+    function finishProgress() {
+        generating = false;
+        clearInterval(progressTimer);
+        setProgress(100);
+        setTimeout(() => {
+            progressWrap.style.display = 'none';
+            progressText.style.display = 'none';
+        }, 1200);
+    }
+
+    function failProgress() {
+        generating = false;
+        clearInterval(progressTimer);
+        setProgress(0);
+        setTimeout(() => {
+            progressWrap.style.display = 'none';
+            progressText.style.display = 'none';
+        }, 800);
+    }
+
     function generate() {
         const prompt = document.getElementById('prompt').value;
 
@@ -204,12 +300,14 @@
         downloadBtn.disabled = true;
         currentImageUrl = "";
 
+        startProgress();
+
         const seed = Math.floor(Math.random() * 999999);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=1024&nologo=true`;
 
         const timer = setTimeout(() => {
             if (status.innerText !== "Fertig!") {
-                status.innerText = "Bild wird generiert (ca 3 min)";
+                status.innerText = "Bild wird generiert...";
             }
         }, 10000);
 
@@ -219,6 +317,7 @@
             img.style.display = "block";
             currentImageUrl = img.src;
             downloadBtn.disabled = false;
+            finishProgress();
         };
 
         img.onerror = function() {
@@ -226,6 +325,7 @@
             status.innerText = "Server-Fehler. Der KI-Knoten ist gerade überlastet.";
             downloadBtn.disabled = true;
             currentImageUrl = "";
+            failProgress();
         };
 
         img.src = url;
@@ -249,7 +349,7 @@
             a.click();
             a.remove();
 
-            URL.revokeObjectURL(blobUrl);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
         } catch (error) {
             const a = document.createElement('a');
             a.href = currentImageUrl;
